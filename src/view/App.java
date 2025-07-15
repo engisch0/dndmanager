@@ -1,0 +1,167 @@
+package src.view;
+
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import src.VariablesForMultipleClasses;
+import src.controller.DatabaseController;
+import src.controller.DnDManager;
+import src.model.GameMaster;
+import src.model.Player;
+import src.model.User;
+
+/**
+ * Main-Klasse, welche alle Instanzen von Klassen beinhaltet die erforderlich sind. Es ist ebenfalls ein Einstiegspunkt für diese App.
+ * 
+ * @since M1
+ */
+public final class App extends Application {
+    /** Variable, die den Datenbank verwaltet */
+    DatabaseController databaseController = new DatabaseController();
+    DnDManager dnDManager = new DnDManager();
+    SessionView sessionView;
+
+    /** Der primäre Stage */
+    Stage primaryStage;
+    /** Der primäre Scene */
+    Scene primaryScene;
+
+    /** Das View für das Login */
+    LoginView loginView;
+
+    /** Das View für die Registrierung*/
+    RegistrationView registrationView;
+
+    /**
+     * Diese Methode initialisiert die primaryStage, stellt das Scene und das loginView als Standart ein und zeigt dann das primaryStage an (d.h der Spieler wird mit der Anmeldung begrüßt)
+     */
+    @Override
+    public void start(Stage stage) {
+        primaryStage = stage;
+        primaryScene = new Scene(new VBox(), 1440, 900);
+        registrationView = new RegistrationView();
+        //sessionView = new SessionView();
+
+        dnDManager.users = databaseController.loadUsers();
+
+        // Dinge für das loginView
+        loginView = new LoginView();
+        loginView.exitButton.setOnAction(e -> {
+            exit();
+        });
+
+        loginView.loginButton.setOnAction(e -> {
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setContentText(
+                    "Die Anmeldung ist fehlgeschlagen. Sie haben möglicherweise die Anmeldedaten falsch eingegeben oder vertippt. Bitte versuchen Sie es erneut.");
+            alert.setTitle("Anmeldung fehlgeschlagen");
+            alert.setHeaderText("");
+            
+             
+            if (!databaseController.userLogin(loginView.usernameField.getText(), loginView.passwordField.getText())) {
+                alert.show();
+            } else {
+                VariablesForMultipleClasses.currentloggedinusername = loginView.usernameField.getText();
+                loginView.usernameField.clear();
+                loginView.passwordField.clear();
+                getCurrentUserInformationAndPutInTheCurrentUserVariable();
+                loadDnDSession();
+            }
+            
+        });
+
+        loginView.createAccountButton.setOnAction(e -> {
+            primaryScene.setRoot(registrationView);
+        });
+
+
+        // Dinge für das RegistrationView //
+        registrationView.returntologinButton.setOnAction(e -> {
+            primaryScene.setRoot(loginView);
+        });
+
+        registrationView.createButton.setOnAction(e -> {
+            if (registrationView.usernameField.getText().isBlank() || registrationView.usernameField.getText().isEmpty()
+                    || registrationView.passwordField.getText().isEmpty() || registrationView.passwordField.getText().isEmpty()) {
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setContentText("Erstellung des Benutzers fehlgeschlagen.");
+                alert.setTitle("Benutzererstellung fehlgeschlagen");
+                alert.setHeaderText("");
+                alert.show();
+                return;
+            }
+            
+            databaseController.createUser(registrationView.usernameField.getText(), registrationView.passwordField.getText());
+            registrationView.createButton.setDisable(true);
+        });
+
+        primaryScene.setRoot(loginView);
+        primaryStage.setScene(primaryScene);
+        primaryStage.setTitle("DnD Manager: Login");
+        primaryStage.show();
+    }
+
+    public void exit() {
+        primaryStage.close();
+        System.exit(0);
+    }
+
+    /**
+     * Ladet den DnD-Session, nachdem der Benutzer sich automatisch angemeldet hat
+     */
+    private void loadDnDSession() {
+        if (dnDManager.currentloggedinUser instanceof Player) {
+            this.sessionView = new SessionViewPlayer();
+
+            ((SessionViewPlayer) sessionView).greetuserLabel.setText("Willkommen Spieler, " + dnDManager.currentloggedinUser.getUsername() + "!");
+
+            // Dinge für das SessionView
+            ((SessionViewPlayer) sessionView).logoutButton.setOnAction(e -> {
+                primaryScene.setRoot(loginView);
+                primaryStage.setTitle("DnD Manager: Login");
+                dnDManager.currentloggedinUser = null;
+                ((SessionViewPlayer) sessionView).greetuserLabel.setText(null);
+                //databaseController.userLogout();
+            });
+        } else if(dnDManager.currentloggedinUser instanceof GameMaster) {
+            this.sessionView = new SessionViewGameMaster();
+
+            ((SessionViewGameMaster) sessionView).greetuserLabel.setText("Willkommen Spielleiter, " + dnDManager.currentloggedinUser.getUsername() + "!");
+
+            // Dinge für das SessionView
+            ((SessionViewGameMaster) sessionView).logoutButton.setOnAction(e -> {
+                primaryScene.setRoot(loginView);
+                primaryStage.setTitle("DnD Manager: Login");
+                dnDManager.currentloggedinUser = null;
+                ((SessionViewGameMaster) sessionView).greetuserLabel.setText(null);
+                //databaseController.userLogout();
+            });
+        }
+
+        
+        primaryScene.setRoot(sessionView);
+        primaryStage.setTitle("DnD Session; Als " + dnDManager.currentloggedinUser.getUsername() + " angemeldet");
+    }
+
+    public void getCurrentUserInformationAndPutInTheCurrentUserVariable() {
+        for (User user : dnDManager.users) {
+            if (user.getUsername().equals(VariablesForMultipleClasses.currentloggedinusername)) {
+                if (user instanceof Player) {
+                    dnDManager.currentloggedinUser = (Player) user;
+                } else if (user instanceof GameMaster) {
+                    dnDManager.currentloggedinUser = (GameMaster) user;
+                }
+            }
+        }
+    }
+
+    /**
+     * Main-Methode
+     */
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
