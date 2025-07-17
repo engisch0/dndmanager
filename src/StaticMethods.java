@@ -2,6 +2,7 @@ package src;
 
 import javafx.scene.paint.Color;
 
+@Deprecated
 public final class StaticMethods {
     
     /** Stellt den Hintegrund von einem belibigen node ein, indem das "-fx-background-color" auf black eingestellt wird */

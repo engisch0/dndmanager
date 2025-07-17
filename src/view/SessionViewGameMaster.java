@@ -42,7 +42,7 @@ public class SessionViewGameMaster extends SessionView {
         super.setBottom(bottomLayout);
         super.setCenter(centerLayout);
 
-        super.setStyle(StaticMethods.BLACK_BACKGROUND_CSS);
+        super.setStyle(VariablesForMultipleClasses.BLACK_BACKGROUND_CSS);
     }
 
 }

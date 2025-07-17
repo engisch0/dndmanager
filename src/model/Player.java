@@ -22,4 +22,5 @@ public class Player extends User {
         super(userID, username);
         this.characters = new ArrayList<>();
     }
+
 }

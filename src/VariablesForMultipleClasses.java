@@ -3,7 +3,7 @@ package src;
 public final class VariablesForMultipleClasses {
     
     /** Temporäre Speicherung der Nutzername des derzeit angemeldeten Nutzer */
-    public static String currentloggedinusername = "";
+    public static transient String currentloggedinusername = "";
 
     /** Stellt die Textfarbe auf Weiß */
     public static final String WHITE_TEXT_COLOR = "-fx-text-fill: white";

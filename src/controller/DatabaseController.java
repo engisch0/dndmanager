@@ -181,8 +181,6 @@ public final class DatabaseController {
                 } else {
                     users.add(new GameMaster(userID, username));
                 }
-
-
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -190,5 +188,9 @@ public final class DatabaseController {
         }
 
         return users;
+    }
+
+    public ArrayList<Character> loadCharacterOfUser(String username) {
+        return null;
     }
 }

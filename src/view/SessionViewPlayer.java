@@ -4,7 +4,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import src.StaticMethods;
 import src.VariablesForMultipleClasses;
 
 public class SessionViewPlayer extends SessionView {
@@ -14,8 +13,17 @@ public class SessionViewPlayer extends SessionView {
     Button logoutButton;
 
     HBox bottomLayout;
-    VBox centerLayout;
+    VBox topLayout;
     VBox leftMenus;
+
+    CharacterViewPlayer characterview;
+    OverviewPlayer overview;
+    
+    boolean firstInitiated = true;
+
+    // Komponente für die LeftMenu
+    Button overviewButton;
+    Button characterViewButton;
 
     /**
      * 
@@ -23,26 +31,41 @@ public class SessionViewPlayer extends SessionView {
     public SessionViewPlayer() {
         leftMenus = new VBox(0.1);
         bottomLayout = new HBox();
-        centerLayout = new VBox();
+        topLayout = new VBox();
+        characterview = new CharacterViewPlayer();
+        this.overview = new OverviewPlayer();
+        this.overviewButton = new Button("Übersicht");
+        this.characterViewButton = new Button("Charaktere");
+        this.characterViewButton.setOnAction(e -> {
+            super.setCenter(characterview);
+            greetuserLabel.setText("Charaktere");
+        });
+        this.overviewButton.setOnAction(e -> {
+            super.setCenter(overview);
+            greetuserLabel.setText("Übersicht");
+        });
+
+        super.setCenter(overview);
 
         leftMenus.setPrefWidth(200);
 
         this.greetuserLabel = new Label();
         greetuserLabel.setStyle("-fx-text-fill: white; -fx-font-size: 50px");
         this.logoutButton = new Button("Abmelden");
+        
+        leftMenus.getChildren().addAll(overviewButton, characterViewButton);
 
-        Label label = new Label("Übersicht");
-        label.setStyle(VariablesForMultipleClasses.WHITE_TEXT_COLOR);
-        leftMenus.getChildren().add(label);
-
-        centerLayout.getChildren().addAll(greetuserLabel);
+        topLayout.getChildren().addAll(greetuserLabel);
         bottomLayout.getChildren().addAll(logoutButton);
 
         super.setLeft(leftMenus);
         super.setBottom(bottomLayout);
-        super.setCenter(centerLayout);
+        super.setTop(topLayout);
 
-        super.setStyle(StaticMethods.BLACK_BACKGROUND_CSS);
+        super.setStyle(VariablesForMultipleClasses.BLACK_BACKGROUND_CSS);
     }
 
+    public void loadCharacterView() {
+        super.setCenter(overview);
+    }
 }
