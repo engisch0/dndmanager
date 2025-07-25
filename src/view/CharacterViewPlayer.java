@@ -1,5 +1,7 @@
 package src.view;
 
+import java.util.ArrayList;
+
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
@@ -11,6 +13,7 @@ public class CharacterViewPlayer extends HBox {
     ListView<String> listOfCharacterNames;
     VBox characterInformation;
     Label characterInformationsText;
+    ArrayList<String> characternames;
 
     public CharacterViewPlayer() {
         this.listOfCharacterNames = new ListView<>();
@@ -19,14 +22,14 @@ public class CharacterViewPlayer extends HBox {
         characterInformationsText.setStyle(VariablesForMultipleClasses.WHITE_TEXT_COLOR);
         characterInformation.getChildren().addAll(characterInformationsText);
 
+        this.characternames = new ArrayList<>();
+
         listOfCharacterNames = new ListView<>();
-        listOfCharacterNames.getItems().add("Hello");
-        listOfCharacterNames.getItems().add("This");
-        listOfCharacterNames.getItems().add("Is");
-        listOfCharacterNames.getItems().add("A");
-        listOfCharacterNames.getItems().add("List");
+
+        
+
+        
 
         super.getChildren().addAll(listOfCharacterNames, characterInformation);
-
     }
 }

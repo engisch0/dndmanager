@@ -10,8 +10,7 @@ public class OverviewPlayer extends VBox {
 
 
     public OverviewPlayer() {
-        title = new Label("Benutzerinformationen:");
-        title.setStyle(VariablesForMultipleClasses.WHITE_TEXT_COLOR);
+        title = new Label();
         super.getChildren().add(title);
         super.setStyle(VariablesForMultipleClasses.BLACK_BACKGROUND_CSS);
     }

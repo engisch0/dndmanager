@@ -11,7 +11,6 @@ import src.controller.DatabaseController;
 import src.controller.DnDManager;
 import src.model.GameMaster;
 import src.model.Player;
-import src.model.User;
 
 /**
  * Main-Klasse, welche alle Instanzen von Klassen beinhaltet die erforderlich sind. Es ist ebenfalls ein Einstiegspunkt für diese App.
@@ -64,10 +63,9 @@ public final class App extends Application {
             if (!databaseController.userLogin(loginView.usernameField.getText(), loginView.passwordField.getText())) {
                 alert.show();
             } else {
-                VariablesForMultipleClasses.currentloggedinusername = loginView.usernameField.getText();
                 loginView.usernameField.clear();
                 loginView.passwordField.clear();
-                getCurrentUserInformationAndPutInTheCurrentUserVariable();
+                // DEPRECATED: getCurrentUserInformationAndPutInTheCurrentUserVariable();
                 loadDnDSession();
             }
             
@@ -113,29 +111,47 @@ public final class App extends Application {
      * Ladet den DnD-Session, nachdem der Benutzer sich automatisch angemeldet hat
      */
     private void loadDnDSession() {
-        if (dnDManager.currentloggedinUser instanceof Player) {
-            this.sessionView = new SessionViewPlayer();
+        if (dnDManager.users.get(VariablesForMultipleClasses.currentloggedinID - 1) instanceof Player) {
+            Player currentPlayer = (Player) dnDManager.users.get(VariablesForMultipleClasses.currentloggedinID - 1);
+            SessionViewPlayer sessionViewPlayer = new SessionViewPlayer();
 
-            ((SessionViewPlayer) sessionView).greetuserLabel.setText("Willkommen Spieler, " + dnDManager.currentloggedinUser.getUsername() + "!");
+            sessionViewPlayer.greetuserLabel.setText("Willkommen Spieler, " + dnDManager.users.get(VariablesForMultipleClasses.currentloggedinID - 1).getUsername() + "!");
 
-            // Dinge für das SessionView
-            ((SessionViewPlayer) sessionView).logoutButton.setOnAction(e -> {
+            // Dinge für das SessionViewPlayer
+            sessionViewPlayer.logoutButton.setOnAction(e -> {
                 primaryScene.setRoot(loginView);
                 primaryStage.setTitle("DnD Manager: Login");
-                dnDManager.currentloggedinUser = null;
-                ((SessionViewPlayer) sessionView).greetuserLabel.setText(null);
+                VariablesForMultipleClasses.currentloggedinID = -1;
+                sessionViewPlayer.greetuserLabel.setText(null);
+
+                // Dinge für das OverviewPlayer
+                sessionViewPlayer.overview.title.setText("Benutzerinformationen:\nAnzahl Charaktere: " + currentPlayer.characters.size() + "\n");
+                sessionViewPlayer.overview.title.setStyle(VariablesForMultipleClasses.WHITE_TEXT_COLOR);
+
+                for (int i = 0; i < currentPlayer.characters.size(); i++) {
+                    sessionViewPlayer.characterview.characternames.add(currentPlayer.characters.get(i).getName());
+                }
+
+                
+
                 //databaseController.userLogout();
             });
-        } else if(dnDManager.currentloggedinUser instanceof GameMaster) {
+
+            for(int i = 0; i < ((Player) dnDManager.users.get(VariablesForMultipleClasses.currentloggedinID - 1)).characters.size(); i++) {
+                sessionViewPlayer.characterview.characternames.add(((Player) dnDManager.users.get(VariablesForMultipleClasses.currentloggedinID - 1)).characters.get(i).getName());
+            }
+
+            this.sessionView = sessionViewPlayer;
+        } else if(dnDManager.users.get(VariablesForMultipleClasses.currentloggedinID - 1) instanceof GameMaster) {
             this.sessionView = new SessionViewGameMaster();
 
-            ((SessionViewGameMaster) sessionView).greetuserLabel.setText("Willkommen Spielleiter, " + dnDManager.currentloggedinUser.getUsername() + "!");
+            ((SessionViewGameMaster) sessionView).greetuserLabel.setText("Willkommen Spielleiter, " + dnDManager.users.get(VariablesForMultipleClasses.currentloggedinID - 1).getUsername() + "!");
 
-            // Dinge für das SessionView
+            // Dinge für das SessionViewgameMaster
             ((SessionViewGameMaster) sessionView).logoutButton.setOnAction(e -> {
                 primaryScene.setRoot(loginView);
                 primaryStage.setTitle("DnD Manager: Login");
-                dnDManager.currentloggedinUser = null;
+                VariablesForMultipleClasses.currentloggedinID = -1;
                 ((SessionViewGameMaster) sessionView).greetuserLabel.setText(null);
                 //databaseController.userLogout();
             });
@@ -143,19 +159,7 @@ public final class App extends Application {
 
         
         primaryScene.setRoot(sessionView);
-        primaryStage.setTitle("DnD Session; Als " + dnDManager.currentloggedinUser.getUsername() + " angemeldet");
-    }
-
-    public void getCurrentUserInformationAndPutInTheCurrentUserVariable() {
-        for (User user : dnDManager.users) {
-            if (user.getUsername().equals(VariablesForMultipleClasses.currentloggedinusername)) {
-                if (user instanceof Player) {
-                    dnDManager.currentloggedinUser = (Player) user;
-                } else if (user instanceof GameMaster) {
-                    dnDManager.currentloggedinUser = (GameMaster) user;
-                }
-            }
-        }
+        primaryStage.setTitle("DnD Session; Als " + dnDManager.users.get(VariablesForMultipleClasses.currentloggedinID - 1).getUsername() + " angemeldet");
     }
 
     /**

@@ -7,7 +7,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import src.StaticMethods;
+import src.VariablesForMultipleClasses;
 
 /**
  * This class contains the login components
@@ -54,7 +54,7 @@ public class LoginView extends VBox {
      * Diese Methode erstellt Objekte/Komponenten für das LoginView
      */
     public void createLoginScene() {
-        super.setStyle(StaticMethods.BLACK_BACKGROUND_CSS);
+        super.setStyle(VariablesForMultipleClasses.BLACK_BACKGROUND_CSS);
         
         // Initialisierung der Objekte und deren Anpassung
         welcomeLabel = new Label("Willkommen zur Dungeons and Dragons");

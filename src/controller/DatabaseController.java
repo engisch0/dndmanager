@@ -5,13 +5,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 
 import src.VariablesForMultipleClasses;
+import src.model.Character;
 import src.model.GameMaster;
 import src.model.Player;
 import src.model.User;
@@ -66,21 +66,21 @@ public final class DatabaseController {
      * @return true wenn der Benutzer sich automatisch angemeldet hat, ansonsten immer false.
      */
     public boolean userLogin(String username, String password) {
-        try (Statement statement = databaseConnection.createStatement()) {
+        try {
+            PreparedStatement statement = databaseConnection.prepareStatement("SELECT username FROM t_user WHERE username = \"" + username + "\";");
+
             // Suche des Benutzername //
-            ResultSet rs = statement.executeQuery("SELECT username FROM t_user WHERE username = \"" + username + "\"");
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+            ResultSet rs = statement.executeQuery();
+
             boolean userNameFound = false;
             while (rs.next()) {
-                for (int i = 1; i <= columnCount; i++) {
-                    //Speichert das BBenutzername
-                    if (username.equals(rs.getString(i))) {
-                        userNameFound = true;
-                        break;
-                    }
+                String fetchedusername = rs.getString(1);
+                System.out.println("Abgerufene Benutzername: " + fetchedusername);
+                //Speichert das Benutzername
+                if (fetchedusername.equals(username)) {
+                    userNameFound = true;
+                    break;
                 }
-                
             }
 
             if (!userNameFound) {
@@ -88,26 +88,34 @@ public final class DatabaseController {
                 return false;       
             }
 
+            //Herausfinden des IDs
+            statement = databaseConnection.prepareStatement("SELECT userID FROM t_user WHERE username = \"" + username + "\";");
+            rs = statement.executeQuery();
+
+            int fetcheduserid = -1;
+            while (rs.next()) {
+                fetcheduserid = rs.getInt(1);
+            }
+
             // Passwortüberprüfung //
-            rs = statement.executeQuery("SELECT t_user.password FROM t_user WHERE t_user.username = \"" + username  + "\"");
-            metaData = rs.getMetaData();
-            columnCount = metaData.getColumnCount();
+            statement = databaseConnection.prepareStatement("SELECT t_user.password FROM t_user WHERE t_user.username = \"" + username  + "\";");
+            rs = statement.executeQuery();
 
             while (rs.next()) {
-                for (int i = 1; i <= columnCount; i++) {
-                    // Überprüft, ob dass Passwort mit dem eingegebenen Passwort übereinstimmt
-                    if (rs.getString(i).equals(password)) {
-                        System.out.println("Anmeldung erfolgreich.");
-                        int whichtypeOfPlayer = checkIfUserIsPlayerOrGameMaster(username);
+                // Überprüft, ob dass Passwort mit dem eingegebenen Passwort übereinstimmt
+                String fetchedpassword = rs.getString(1);
+                System.out.println("Abgerufene Passwort: " + fetchedpassword);
+                if (fetchedpassword.equals(password)) {
+                    System.out.println("Anmeldung erfolgreich.");
+                    int whichtypeOfPlayer = checkIfUserIsPlayerOrGameMaster(username);
 
-                        if (whichtypeOfPlayer == 1) {
-                            System.out.println("Sie sind ein Spieler!");
-                        } else {
-                            System.out.println("Sie sind ein Spielleiter!");
-                        }
-                        VariablesForMultipleClasses.currentloggedinusername = username;
-                        return true; //Für das GUI, damit es Bescheid weiß dass die Anmeldung erfolgreich ist
+                    if (whichtypeOfPlayer == 1) {
+                        System.out.println("Sie sind ein Spieler!");
+                    } else {
+                        System.out.println("Sie sind ein Spielleiter!");
                     }
+                        VariablesForMultipleClasses.currentloggedinID = fetcheduserid;
+                        return true; //Für das GUI, damit es Bescheid weiß dass die Anmeldung erfolgreich ist
                 }
             }
         } catch (SQLException e) {
@@ -178,8 +186,42 @@ public final class DatabaseController {
                 System.out.println(username);
                 if (checkIfUserIsPlayerOrGameMaster(username) == 1) {
                     users.add(new Player(userID, username));
+                    //Einstellungen und Spieldaten werden geladen
+                    Player player = (Player) users.getLast();
+
+                        // Zuerst die Charaktere
+                    String characterName = "", characterRace = "";
+                    int characterID = -1, characterAge = 0;
+                    double characterSize = 0.00;
+
+                    String characterQuery = "SELECT t_character.* FROM t_character JOIN t_ownerofcharacter ON t_ownerofcharacter.characterID = t_character.characterID JOIN t_player ON t_player.playerID = t_ownerofcharacter.playerID WHERE t_ownerofcharacter.playerID = " + player.getUserId() + ";";
+                    try {
+                        PreparedStatement characterPreparedStatement = databaseConnection.prepareStatement(characterQuery);
+                        ResultSet characterResultSet = characterPreparedStatement.executeQuery();
+
+                        while (characterResultSet.next()) {
+                            characterID = characterResultSet.getInt("t_character.characterID");
+                            characterName = characterResultSet.getString("t_character.name");
+                            characterRace = characterResultSet.getString("t_character.race");
+                            characterAge = characterResultSet.getInt("t_character.Age");
+                            characterSize = characterResultSet.getDouble("t_character.size");
+                            // Charaktere mit ID 0 gibt es nicht, deswegen kann es als Überprüfung mitgenommen werden
+                            if (characterID == -1) {
+                                continue;
+                            } else {
+                                player.characters.add(new Character(characterID, characterName, characterRace, characterAge, characterSize));
+                            }
+                            
+                        }
+                        users.set(users.size() - 1, player);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    // Spätere Daten und Einstellungen folgen. //
                 } else {
                     users.add(new GameMaster(userID, username));
+                    // Hier folgt Später die Ladung des Daten von der Spielleiter.
                 }
             }
         } catch (Exception e) {
@@ -188,9 +230,5 @@ public final class DatabaseController {
         }
 
         return users;
-    }
-
-    public ArrayList<Character> loadCharacterOfUser(String username) {
-        return null;
     }
 }
